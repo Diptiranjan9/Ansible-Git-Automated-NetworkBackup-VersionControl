@@ -1,0 +1,99 @@
+---
+#Cisco switches backup task
+- name: Cisco Switch Backup
+  hosts: ciscoswitch
+  gather_facts: false
+  connection: network_cli
+
+  tasks:
+    - name: "Cisco backup" 
+      ios_command:
+        commands: show running-config
+      register: backup
+
+    - name: Ensure backup directory exists
+      file:
+        path: "/path/to/store/your/backup/config/projectname"
+        state: directory
+        mode: '0755'
+
+    - name: Backup cisco config
+      copy:
+        content: "{{ backup.stdout[0] }}"
+        dest: "/path/to/store/your/backup/config/projectname/Config_{{ inventory_hostname }}.txt"
+
+#Juniper Switches backup task
+- name: Juniper Switch backup
+  hosts: junipersw
+  gather_facts: false
+  connection: local
+
+  tasks: 
+    - name: "Juniper backup"
+      juniper.device.config:
+        retrieve: "committed"
+      register: backup
+
+    - name: Ensure backup directory exists
+      file:
+        path: "/path/to/store/your/backup/config/projectname"
+        state: directory
+        mode: '0755'
+
+    - name: Backup cisco config
+      copy:
+        content: "{{ backup.config }}"
+        dest: "/path/to/store/your/backup/config/projectname/Config_{{ inventory_hostname }}.txt"
+
+#Fortinet Firewall backup task
+- name: FW backup
+  hosts: firewall
+  gather_facts: false
+  connection: httpapi
+  collections:
+    - fortinet.fortios
+
+  tasks:
+    - name: "Firewall backup"
+      fortios_monitor_fact:
+        selector: 'system_config_backup'
+        vdom: 'root'
+        params:
+          scope: 'global'
+      register: backup
+
+    - name: Ensure backup directory exists
+      file:
+        path: "/path/to/store/your/backup/config/projectname"
+        state: directory
+        mode: '0755'
+
+    - name: Save Fortinet backup to file
+      copy:
+        content: '{{ backup.meta.raw }}'
+        dest: "/path/to/store/your/backup/config/projectname/Config_{{ inventory_hostname }}.txt"
+
+# Git add and commit for version control
+
+- name: GIT SECTION
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: print time
+      command: date
+      register: time
+      changed_when: false
+      delegate_to: localhost
+      run_once: yes
+
+    - name: git commands
+      shell: |
+        git add .
+        git commit -m "Device Backup on {{ time.stdout }} "
+        git push
+      args:
+        chdir: /path/to/store/your/backup/config/projectname
+      delegate_to: localhost
+      run_once: yes
+
