@@ -79,7 +79,11 @@ Once you create your own Git repository, you can clone it to a local directory w
 ```
 mkdir /path/to/store/your/backup/config/
 cd /path/to/store/your/backup/config/
-git clone git@gitserver:/srv/projectname.git
+git clone git@gitserverip:/path/to/projectname.git
+
+OR:- You can create your own repository on GitHub and clone this repository.
+git clone https://github.com/githubid/projectname.git #Github repo url
+
 cd projectname
 touch readme
 git add .
